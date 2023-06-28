@@ -4,6 +4,7 @@
 #include "WolfMultiplayerSessionsSubsystem.h"
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "Interfaces/OnlineIdentityInterface.h"
 
 UWolfMultiplayerSessionsSubsystem::UWolfMultiplayerSessionsSubsystem()
 {
@@ -154,4 +155,12 @@ void UWolfMultiplayerSessionsSubsystem::OnDestroySessionCompleteCB(FName session
 		CreateSession(lastNumPubConnections, lastMatchType);
 	}
 	OnDestroySessionComplete.Broadcast(successful);
+}
+
+FString UWolfMultiplayerSessionsSubsystem::GetPlayerNickName()
+{
+	IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get();
+	const ULocalPlayer* ulocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	auto uid = (ulocalPlayer->GetPreferredUniqueNetId());
+	return onlineSubsystem->GetIdentityInterface()->GetPlayerNickname(*uid);
 }

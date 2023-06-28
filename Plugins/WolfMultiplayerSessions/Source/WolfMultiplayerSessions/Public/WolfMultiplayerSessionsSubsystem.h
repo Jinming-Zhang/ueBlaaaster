@@ -72,4 +72,7 @@ protected:
 	bool createSessionOnDestroy;
 	int32 lastNumPubConnections;
 	FString lastMatchType;
+public:
+	// Player info queries
+	FString GetPlayerNickName();
 };

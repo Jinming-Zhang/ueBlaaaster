@@ -15,6 +15,8 @@ public:
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
+	virtual void PostInitializeComponents()override;
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,6 +25,10 @@ protected:
 	virtual void MoveRight(float value);
 	virtual void Turn(float value);
 	virtual void LookUp(float value);
+	virtual void EquipBtnPressed();
+	virtual void CrounchBtnPressed();
+	virtual void AimBtnPressed();
+	virtual void AimBtnReleased();
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -31,5 +37,26 @@ private:
 		class UCameraComponent* followCamera;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 		class UWidgetComponent* overheadWidget;
+	UPROPERTY(VisibleAnywhere)
+		class UCombatComponent* combat;
 
+private:
+	// replicated variables
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
+		class AWeapon* overlappingWeapon;
+	UFUNCTION()
+		void OnRep_OverlappingWeapon(AWeapon* lastWeapon);
+	 
+	UFUNCTION(Server, Reliable)
+		void ServerEquipBtnPressed();
+	UFUNCTION(Server, Reliable)
+		void ServerAimBtnPressed();
+	UFUNCTION(Server, Reliable)
+		void ServerAimBtnReleased();
+
+public:
+	// getters and setters
+	void SetOverlappingWeapon(AWeapon* w);
+	bool IsWeaponEquipped();
+	bool IsAiming();
 };
