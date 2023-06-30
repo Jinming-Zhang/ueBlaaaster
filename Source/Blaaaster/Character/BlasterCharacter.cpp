@@ -35,6 +35,10 @@ ABlasterCharacter::ABlasterCharacter()
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	turningInPlace = ETurningInPlace::ETIP_NotTurning;
+
+	NetUpdateFrequency = 100.f;
+	MinNetUpdateFrequency = 33.f;
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -160,6 +164,15 @@ void ABlasterCharacter::AimBtnReleased()
 	}
 }
 
+void ABlasterCharacter::Jump()
+{
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	Super::Jump();
+}
+
 void ABlasterCharacter::AimOffset(float deltaTime)
 {
 	if (combat && combat->equippedWeapon == nullptr)
@@ -177,13 +190,22 @@ void ABlasterCharacter::AimOffset(float deltaTime)
 		FRotator currentAimRotation{ FRotator(.0f, GetBaseAimRotation().Yaw, .0f) };
 		FRotator deltaAimRotation{ UKismetMathLibrary::NormalizedDeltaRotator(currentAimRotation, startingAimRotation) };
 
+		// the difference between camera rotation and character front rotation
 		AO_Yaw = deltaAimRotation.Yaw;
-		bUseControllerRotationYaw = false;
+		if (turningInPlace == ETurningInPlace::ETIP_NotTurning)
+		{
+			interpAO_Yaw = AO_Yaw;
+		}
+		// this sets if the camera should follow the character's facing direction
+		bUseControllerRotationYaw = true;
+		TurnInPlace(deltaTime);
 	}
+	// moving or jumbing
 	else {
 		startingAimRotation = FRotator(.0f, GetBaseAimRotation().Yaw, .0f);
 		AO_Yaw = .0f;
 		bUseControllerRotationYaw = true;
+		turningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
 	AO_Pitch = GetBaseAimRotation().Pitch;
@@ -194,6 +216,31 @@ void ABlasterCharacter::AimOffset(float deltaTime)
 		FVector2D outRange{ -90.f, 0.f };
 		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
 	}
+}
+
+void ABlasterCharacter::TurnInPlace(float deltaTime)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("AO_Yaw: %f"), AO_Yaw);
+	if (AO_Yaw > 90.f)
+	{
+		turningInPlace = ETurningInPlace::ETIP_Right;
+	}
+	else if (AO_Yaw < -90.f)
+	{
+		turningInPlace = ETurningInPlace::ETIP_Left;
+	}
+
+	if (turningInPlace != ETurningInPlace::ETIP_NotTurning)
+	{
+		interpAO_Yaw = FMath::FInterpTo(interpAO_Yaw, .0f, deltaTime, 3.f);
+		AO_Yaw = interpAO_Yaw;
+		if (FMath::Abs(AO_Yaw) < 15.f)
+		{
+			turningInPlace = ETurningInPlace::ETIP_NotTurning;
+			startingAimRotation = FRotator(.0f, GetBaseAimRotation().Yaw, .0f);
+		}
+	}
+
 }
 
 // this function is called only on the server, the new value will be replicated

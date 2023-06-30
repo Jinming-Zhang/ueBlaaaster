@@ -35,6 +35,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float deltaTime)
 	const AWeapon* equippedWeapon = blasterCharacter->GetEquippedWeapon();
 	isCrouched = blasterCharacter->bIsCrouched;
 	isAiming = blasterCharacter->IsAiming();
+	turningInPlace = blasterCharacter->GetTurningInPlace();
 
 	// Note we can have the camera point in one direction and the character facing in a different direction than the camera
 	// baseAimRotation is the Rotation for the camera in global space

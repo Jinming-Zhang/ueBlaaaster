@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Blaaaster/BlasterTypes/TurningInPlace.h"
 #include "BlasterCharacter.generated.h"
 
 UCLASS()
@@ -29,15 +30,18 @@ protected:
 	virtual void CrounchBtnPressed();
 	virtual void AimBtnPressed();
 	virtual void AimBtnReleased();
+	virtual void Jump()override;
 protected:
 	// animation properties
 	void AimOffset(float deltaTime);
 	float AO_Yaw;
+	float interpAO_Yaw;
 	float AO_Pitch;
 	FRotator startingAimRotation;
-public:
-	FORCEINLINE float GetAOYaw() { return AO_Yaw; }
-	FORCEINLINE float GetAOPitch() { return AO_Pitch; }
+	ETurningInPlace turningInPlace;
+
+	void TurnInPlace(float deltaTime);
+
 
 
 private:
@@ -66,4 +70,7 @@ public:
 	bool IsWeaponEquipped();
 	bool IsAiming();
 	const AWeapon* GetEquippedWeapon()const;
+	FORCEINLINE float GetAOYaw() { return AO_Yaw; }
+	FORCEINLINE float GetAOPitch() { return AO_Pitch; }
+	FORCEINLINE ETurningInPlace GetTurningInPlace()const { return turningInPlace; }
 };
