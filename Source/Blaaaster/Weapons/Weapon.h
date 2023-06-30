@@ -49,8 +49,6 @@ protected:
 		);
 
 
-public:
-	void SetWeaponState(EWeaponState state);
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 		USkeletalMeshComponent* mesh;
@@ -58,7 +56,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 		class USphereComponent* areaSphereRange;
 
-	UPROPERTY(ReplicatedUsing=OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
 		EWeaponState weaponState;
 
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
@@ -66,5 +64,10 @@ private:
 private:
 	UFUNCTION()
 		void OnRep_WeaponState();
+public:
+	void SetWeaponState(EWeaponState state);
+public:
+	// getters
+	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh()const { return mesh; }
 
 };

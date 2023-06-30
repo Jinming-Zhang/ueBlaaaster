@@ -19,7 +19,7 @@ public:
 	virtual void PostInitializeComponents()override;
 
 protected:
-	// Called when the game starts or when spawned
+	// character controls
 	virtual void BeginPlay() override;
 	virtual void MoveForward(float value);
 	virtual void MoveRight(float value);
@@ -29,6 +29,16 @@ protected:
 	virtual void CrounchBtnPressed();
 	virtual void AimBtnPressed();
 	virtual void AimBtnReleased();
+protected:
+	// animation properties
+	void AimOffset(float deltaTime);
+	float AO_Yaw;
+	float AO_Pitch;
+	FRotator startingAimRotation;
+public:
+	FORCEINLINE float GetAOYaw() { return AO_Yaw; }
+	FORCEINLINE float GetAOPitch() { return AO_Pitch; }
+
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -46,17 +56,14 @@ private:
 		class AWeapon* overlappingWeapon;
 	UFUNCTION()
 		void OnRep_OverlappingWeapon(AWeapon* lastWeapon);
-	 
+
 	UFUNCTION(Server, Reliable)
 		void ServerEquipBtnPressed();
-	UFUNCTION(Server, Reliable)
-		void ServerAimBtnPressed();
-	UFUNCTION(Server, Reliable)
-		void ServerAimBtnReleased();
 
 public:
 	// getters and setters
 	void SetOverlappingWeapon(AWeapon* w);
 	bool IsWeaponEquipped();
 	bool IsAiming();
+	const AWeapon* GetEquippedWeapon()const;
 };

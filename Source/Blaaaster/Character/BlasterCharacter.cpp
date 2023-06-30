@@ -9,6 +9,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Blaaaster/Weapons/Weapon.h"
 #include "Blaaaster/BlasterComponents/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -31,6 +33,8 @@ ABlasterCharacter::ABlasterCharacter()
 	combat->SetIsReplicated(true);
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -41,6 +45,7 @@ void ABlasterCharacter::BeginPlay()
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	AimOffset(DeltaTime);
 }
 
 void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -142,45 +147,55 @@ void ABlasterCharacter::AimBtnPressed()
 {
 	if (combat)
 	{
-		if (HasAuthority())
-		{
-			combat->isAiming = true;
-		}
-		else {
-			ServerAimBtnPressed();
-		}
+		combat->SetAiming(true);
 	}
 }
 
-void ABlasterCharacter::ServerAimBtnPressed_Implementation()
-{
-	if (combat)
-	{
-		combat->isAiming = true;
-	}
-}
 
 void ABlasterCharacter::AimBtnReleased()
 {
 	if (combat)
 	{
-		if (HasAuthority())
-		{
-			combat->isAiming = false;
-		}
-		else {
-			ServerAimBtnReleased();
-		}
+		combat->SetAiming(false);
 	}
 }
 
-void ABlasterCharacter::ServerAimBtnReleased_Implementation()
+void ABlasterCharacter::AimOffset(float deltaTime)
 {
-	if (combat)
+	if (combat && combat->equippedWeapon == nullptr)
 	{
-		combat->isAiming = false;
+		return;
+	}
+
+	FVector velocity{ GetVelocity() };
+	velocity.Z = 0.f;
+	float speed{ StaticCast<float>(velocity.Size()) };
+	bool isInAir{ GetCharacterMovement()->IsFalling() };
+	// standing still
+	if (speed <= .0f && !isInAir)
+	{
+		FRotator currentAimRotation{ FRotator(.0f, GetBaseAimRotation().Yaw, .0f) };
+		FRotator deltaAimRotation{ UKismetMathLibrary::NormalizedDeltaRotator(currentAimRotation, startingAimRotation) };
+
+		AO_Yaw = deltaAimRotation.Yaw;
+		bUseControllerRotationYaw = false;
+	}
+	else {
+		startingAimRotation = FRotator(.0f, GetBaseAimRotation().Yaw, .0f);
+		AO_Yaw = .0f;
+		bUseControllerRotationYaw = true;
+	}
+
+	AO_Pitch = GetBaseAimRotation().Pitch;
+	// pitch correction for server packing, map pitch fro [270,360) to [-90, 0)
+	if (AO_Pitch > 90.f && !IsLocallyControlled())
+	{
+		FVector2D inRange{ 270.f, 360.f };
+		FVector2D outRange{ -90.f, 0.f };
+		AO_Pitch = FMath::GetMappedRangeValueClamped(inRange, outRange, AO_Pitch);
 	}
 }
+
 // this function is called only on the server, the new value will be replicated
 // to the corresponding client
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* w)
@@ -222,4 +237,13 @@ bool ABlasterCharacter::IsWeaponEquipped()
 bool ABlasterCharacter::IsAiming()
 {
 	return combat && combat->isAiming;
+}
+
+const AWeapon* ABlasterCharacter::GetEquippedWeapon() const
+{
+	if (combat == nullptr)
+	{
+		return nullptr;
+	}
+	return combat->equippedWeapon;
 }
