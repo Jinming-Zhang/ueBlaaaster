@@ -16,16 +16,26 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps)const override;
 
+protected:
+	virtual void BeginPlay() override;
+
+protected:
+	// combat related
+	void TraceUnderCrosshairs(FHitResult& outResult);
 public:
 	void EquipWeapon(class AWeapon* weapon);
+	UFUNCTION()
+		void OnRep_EquippedWeapon();
 	void SetAiming(bool aiming);
 	UFUNCTION(Server, Reliable)
 		void ServerSetAiming(bool aiming);
 
-	UFUNCTION()
-		void OnRep_EquippedWeapon();
-protected:
-	virtual void BeginPlay() override;
+	void FireBtnPressed(bool isPress);
+	UFUNCTION(Server, Reliable)
+		void ServerFire();
+	UFUNCTION(NetMulticast, Reliable)
+		void MulticastFire();
+
 
 private:
 	class ABlasterCharacter* character;
@@ -38,4 +48,5 @@ private:
 		float baseWalkSpeed;
 	UPROPERTY(EditAnywhere)
 		float aimWalkSpeed;
+	bool fireBtnPressed;
 };

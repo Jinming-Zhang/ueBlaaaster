@@ -30,9 +30,14 @@ protected:
 	virtual void CrounchBtnPressed();
 	virtual void AimBtnPressed();
 	virtual void AimBtnReleased();
+	virtual void FireBtnPressed();
+	virtual void FireBtnReleased();
 	virtual void Jump()override;
-protected:
+
+public:
 	// animation properties
+	void PlayFireMontage(bool aiming);
+protected:
 	void AimOffset(float deltaTime);
 	float AO_Yaw;
 	float interpAO_Yaw;
@@ -41,7 +46,8 @@ protected:
 	ETurningInPlace turningInPlace;
 
 	void TurnInPlace(float deltaTime);
-
+	UPROPERTY(EditAnywhere, Category = Combat)
+		class UAnimMontage* fireWeaponMontage;
 
 
 private:

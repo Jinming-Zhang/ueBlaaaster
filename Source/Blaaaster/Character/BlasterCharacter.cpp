@@ -9,6 +9,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Blaaaster/Weapons/Weapon.h"
 #include "Blaaaster/BlasterComponents/CombatComponent.h"
+#include "BlasterAnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -60,6 +61,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Crounch", IE_Pressed, this, &ABlasterCharacter::CrounchBtnPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ABlasterCharacter::AimBtnPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ABlasterCharacter::AimBtnReleased);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ABlasterCharacter::FireBtnPressed);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ABlasterCharacter::FireBtnReleased);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ABlasterCharacter::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ABlasterCharacter::MoveRight);
@@ -164,6 +167,22 @@ void ABlasterCharacter::AimBtnReleased()
 	}
 }
 
+void ABlasterCharacter::FireBtnPressed()
+{
+	if (combat)
+	{
+		combat->FireBtnPressed(true);
+	}
+}
+
+void ABlasterCharacter::FireBtnReleased()
+{
+	if (combat)
+	{
+		combat->FireBtnPressed(false);
+	}
+}
+
 void ABlasterCharacter::Jump()
 {
 	if (bIsCrouched)
@@ -171,6 +190,23 @@ void ABlasterCharacter::Jump()
 		UnCrouch();
 	}
 	Super::Jump();
+}
+
+void ABlasterCharacter::PlayFireMontage(bool aiming)
+{
+	if (combat == nullptr || combat->equippedWeapon == nullptr || !fireWeaponMontage)
+	{
+		return;
+	}
+	UAnimInstance* animInstance{ GetMesh()->GetAnimInstance() };
+	if (animInstance)
+	{
+		animInstance->Montage_Play(fireWeaponMontage);
+		FName sectionName;
+		sectionName = aiming ? "RifleAim" : "RifleHip";
+		animInstance->Montage_JumpToSection(sectionName);
+	}
+
 }
 
 void ABlasterCharacter::AimOffset(float deltaTime)

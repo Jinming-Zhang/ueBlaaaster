@@ -76,6 +76,31 @@ void UCombatComponent::SetAiming(bool aiming)
 	}
 }
 
+void UCombatComponent::FireBtnPressed(bool isPress)
+{
+	fireBtnPressed = isPress;
+	ServerFire();
+}
+
+
+void UCombatComponent::ServerFire_Implementation()
+{
+	MulticastFire();
+}
+void UCombatComponent::MulticastFire_Implementation()
+{
+	if (equippedWeapon == nullptr)
+	{
+		return;
+	}
+
+	if (character)
+	{
+		character->PlayFireMontage(isAiming);
+		equippedWeapon->Fire();
+	}
+}
+
 void UCombatComponent::ServerSetAiming_Implementation(bool aiming)
 {
 	isAiming = aiming;
